@@ -1,4 +1,4 @@
-class Chatbox {
+class ChatBox {
     constructor() {
         this.args = {
             openButton: document.querySelector('.chatbox__button'),
@@ -8,84 +8,84 @@ class Chatbox {
 
         this.state = false;
         this.messages = [];
+
+        this.display = this.display.bind(this);
+        this.toggleState = this.toggleState.bind(this);
+        this.onSendButton = this.onSendButton.bind(this);
+        this.updateChatText = this.updateChatText.bind(this);
     }
 
     display() {
-        const {openButton, chatBox, sendButton} = this.args;
+        const { openButton, chatBox, sendButton } = this.args;
+        openButton.addEventListener('click', this.toggleState);
+        sendButton.addEventListener('click', () => this.onSendButton(chatBox));
 
-        openButton.addEventListener('click', () => this.toggleState(chatBox))
-
-        sendButton.addEventListener('click', () => this.onSendButton(chatBox))
-
-        const node = chatBox.querySelector('input');
-        node.addEventListener("keyup", ({key}) => {
+        const inputField = chatBox.querySelector('input');
+        inputField.addEventListener("keyup", ({ key }) => {
             if (key === "Enter") {
-                this.onSendButton(chatBox)
+                this.onSendButton(chatBox);
             }
-        })
+        });
     }
 
-    toggleState(chatbox) {
+    toggleState() {
         this.state = !this.state;
+        const { chatBox } = this.args;
 
-        // show or hides the box
-        if(this.state) {
-            chatbox.classList.add('chatbox--active')
+        if (this.state) {
+            chatBox.classList.add('chatbox--active');
         } else {
-            chatbox.classList.remove('chatbox--active')
+            chatBox.classList.remove('chatbox--active');
         }
     }
 
     onSendButton(chatbox) {
-        var textField = chatbox.querySelector('input');
-        let text1 = textField.value
-        if (text1 === "") {
+        const textField = chatbox.querySelector('input');
+        const txt1 = textField.value;
+
+        if (txt1 === "") {
             return;
         }
 
-        let msg1 = { name: "User", message: text1 }
+        // Send the message to the chatbot
+        const msg1 = { name: "User", message: txt1 };
         this.messages.push(msg1);
 
-        fetch('http://127.0.0.1:5000/predict', {
+        fetch($SCRIPT_ROOT + '/predict', {
             method: 'POST',
-            body: JSON.stringify({ message: text1 }),
+            body: JSON.stringify({ message: txt1 }),
             mode: 'cors',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-          })
-          .then(r => r.json())
-          .then(r => {
-            let msg2 = { name: "Sam", message: r.answer };
-            this.messages.push(msg2);
-            this.updateChatText(chatbox)
-            textField.value = ''
-
-        }).catch((error) => {
-            console.error('Error:', error);
-            this.updateChatText(chatbox)
-            textField.value = ''
-          });
+            headers: { 'content-type': 'application/json' },
+        })
+            .then(r => r.json())
+            .then(r => {
+                const msg2 = { name: "Sam", message: r.answer };
+                this.messages.push(msg2);
+                this.updateChatText(chatbox);
+                textField.value = '';
+            })
+            .catch((error) => {
+                console.error('Error', error);
+                this.updateChatText(chatbox);
+                textField.value = '';
+            });
     }
 
     updateChatText(chatbox) {
-        var html = '';
-        this.messages.slice().reverse().forEach(function(item, index) {
-            if (item.name === "Sam")
-            {
-                html += '<div class="messages__item messages__item--visitor">' + item.message + '</div>'
+        let html = '';
+        this.messages.slice().reverse().forEach(function (item) {
+            // Verify if it's the user or chatbot Sam
+            if (item.name === "Sam") {
+                html += '<div class="messages__item messages__item--visitor">' + item.message + '</div>';
+            } else {
+                html += '<div class="messages__item messages__item--operator">' + item.message + '</div>';
             }
-            else
-            {
-                html += '<div class="messages__item messages__item--operator">' + item.message + '</div>'
-            }
-          });
+        });
 
-        const chatmessage = chatbox.querySelector('.chatbox__messages');
-        chatmessage.innerHTML = html;
+        const chatMessage = chatbox.querySelector('.chatbox__messages');
+        chatMessage.innerHTML = html;
     }
 }
 
-
-const chatbox = new Chatbox();
+const chatbox = new ChatBox();
 chatbox.display();

@@ -89,7 +89,3 @@ class ChatBox {
 
 const chatbox = new ChatBox();
 chatbox.display();
-
-
-
-    
